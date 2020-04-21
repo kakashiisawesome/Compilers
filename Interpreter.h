@@ -1,6 +1,7 @@
 #include "Header.h"
 #include "Parser.h"
 #include "Symbol.h"
+#include "Types.h"
 
 using namespace std;
 
@@ -12,7 +13,7 @@ public:
 	}
 
 	map<string, Symbol> symbolTable;
-	map<string, string> runtime_mem;
+	map<string, Object> runtime_mem;
 
 	string interpret();
 

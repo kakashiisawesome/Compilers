@@ -16,7 +16,7 @@
 // Keywords
 #define LET "LET"
 #define INTEGER "INTEGER"
-#define REAL "REAL"
+#define FLOAT "FLOAT"
 
 using namespace std;
 class Token {

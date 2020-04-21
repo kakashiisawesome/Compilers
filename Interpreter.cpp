@@ -1,7 +1,9 @@
 #include "Interpreter.h"
 
 #define UNDEFINED_SYMBOL "Undefined symbol "
+
 string us;
+
 string Interpreter::interpret() {
 	tree = parser.parse();
 	string res = visit(tree.root);
@@ -22,65 +24,69 @@ bool isUnary(Node* node) {
 	}
 }
 
+
 string Interpreter::visitLet(Node* node) {
-	Token id = node->left_node->token;
+
+	Token id_token = node->left_node->token;
 	string rval = visit(node->right_node);
 
 	if (rval == UNDEFINED_SYMBOL) {
 		return UNDEFINED_SYMBOL;
 	}
-
-	float r = stof(rval);
 	
-	if (symbolTable.find(id.value) == symbolTable.end()) {
-		VarSymbol v;
-		if (floor(r) == r) {
-			v.name = id.value;
-			v.type = INTEGER;
-		}
-		else {
-			v.name = id.value;
-			v.type = REAL;
-		}
-		symbolTable[id.value] = v;
+	Object runtime_obj(rval);
+
+	Symbol v;
+	v.name = id_token.value;
+
+	if (symbolTable.find(v.name) != symbolTable.end()) {
+		v = symbolTable[v.name];
 	}
 
-	runtime_mem[symbolTable[id.value].name] = (symbolTable[id.value].type == INTEGER) ? to_string(stoi(rval)) : to_string(r);
-
-	return runtime_mem[symbolTable[id.value].name];
-
-	
-}
-
-string Interpreter::visitAssign(Node* node) {
-	Token id = node->left_node->token;
-	if (symbolTable.find(id.value) == symbolTable.end()) {
-		us = id.value;
-		return UNDEFINED_SYMBOL;
-	}
-
-	string rval = visit(node->right_node);
-	if (rval == UNDEFINED_SYMBOL) {
-		return UNDEFINED_SYMBOL;
-	}
-
-	float r = stof(rval);
-
-	Symbol v = symbolTable[id.value];
-	if (floor(r) == r) {
-		v.name = id.value;
+	if (runtime_obj.kind == Kind::INT) {
 		v.type = INTEGER;
 	}
 	else {
-		v.name = id.value;
-		v.type = REAL;
+		v.type = FLOAT;
 	}
-	symbolTable[id.value] = v;
+	symbolTable[v.name] = v;
 
-	runtime_mem[symbolTable[id.value].name] = (symbolTable[id.value].type == INTEGER) ? to_string(stoi(rval)) : to_string(r);
+	runtime_mem[v.name] = runtime_obj;
 
-	return runtime_mem[symbolTable[id.value].name];
+	return runtime_obj.getString();
 
+}
+
+string Interpreter::visitAssign(Node* node) {
+
+	Token id_token = node->left_node->token;
+
+	if (symbolTable.find(id_token.value) == symbolTable.end()) {
+		us = id_token.value;
+		return UNDEFINED_SYMBOL;
+	}
+
+	string rval = visit(node->right_node);
+	if (rval == UNDEFINED_SYMBOL) {
+		return UNDEFINED_SYMBOL;
+	}
+
+	Object runtime_obj(rval);
+
+	Symbol v = symbolTable[id_token.value];
+
+	//Only need to update type and runtime value of pre-existing symbol
+	if (runtime_obj.kind == Kind::INT) {
+		v.type = INTEGER;
+	}
+	else {
+		v.type = FLOAT;
+	}
+	symbolTable[v.name] = v;
+
+	runtime_mem[v.name] = runtime_obj;
+
+	return runtime_obj.getString();
 
 }
 
@@ -91,8 +97,8 @@ string Interpreter::visit(Node* node) {
 			if (ls == UNDEFINED_SYMBOL) {
 				return UNDEFINED_SYMBOL;
 			}
-			float l = stof(ls);
-			return to_string(l);
+			Object lobj(ls);
+			return lobj.getString();
 		}
 
 		string ls = visit(node->left_node);
@@ -106,9 +112,12 @@ string Interpreter::visit(Node* node) {
 			return UNDEFINED_SYMBOL;
 		}
 
-		float l = stof(ls);
-		float r = stof(rs);
-		return to_string(l + r);
+		Object lobj(ls);
+		Object robj(rs);
+
+		Object res = lobj + robj;
+		
+		return res.getString();
 	}
 	else if (node->token.type == MINUS) {
 		if (isUnary(node)) {
@@ -116,9 +125,8 @@ string Interpreter::visit(Node* node) {
 			if (ls == UNDEFINED_SYMBOL) {
 				return UNDEFINED_SYMBOL;
 			}
-			float l = stof(ls);
-			l = l * (-1);
-			return to_string(l);
+			Object lobj("-"+ls);
+			return lobj.getString();
 		}
 
 		string ls = visit(node->left_node);
@@ -132,9 +140,12 @@ string Interpreter::visit(Node* node) {
 			return UNDEFINED_SYMBOL;
 		}
 
-		float l = stof(ls);
-		float r = stof(rs);
-		return to_string(l - r);
+		Object lobj(ls);
+		Object robj(rs);
+
+		Object res = lobj - robj;
+
+		return res.getString();
 	}
 	else if (node->token.type == MUL) {
 		string ls = visit(node->left_node);
@@ -148,9 +159,12 @@ string Interpreter::visit(Node* node) {
 			return UNDEFINED_SYMBOL;
 		}
 
-		float l = stof(ls);
-		float r = stof(rs);
-		return to_string(l * r);
+		Object lobj(ls);
+		Object robj(rs);
+
+		Object res = lobj * robj;
+
+		return res.getString();
 	}
 	else if (node->token.type == DIV) {
 		string ls = visit(node->left_node);
@@ -164,9 +178,12 @@ string Interpreter::visit(Node* node) {
 			return UNDEFINED_SYMBOL;
 		}
 
-		float l = stof(ls);
-		float r = stof(rs);
-		return to_string(l / r);
+		Object lobj(ls);
+		Object robj(rs);
+
+		Object res = lobj / robj;
+
+		return res.getString();
 	}
 	else if (node->token.type == LET) {
 		return visitLet(node);
@@ -183,7 +200,7 @@ string Interpreter::visit(Node* node) {
 			return UNDEFINED_SYMBOL;
 		}
 
-		return runtime_mem[symbolTable[node->token.value].name];
+		return runtime_mem[symbolTable[node->token.value].name].getString();
 	}
 }
 
