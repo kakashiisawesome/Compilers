@@ -43,6 +43,7 @@ public:
 	Node* term();
 
 	Node* expr();
+	Node* stringOrChar();
 
 	Node* letStatement();
 	Node* assignStatement();

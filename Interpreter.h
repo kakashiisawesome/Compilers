@@ -20,6 +20,7 @@ public:
 	string visit(Node* node);
 	string visitLet(Node* node);
 	string visitAssign(Node* node);
+	bool isStringOrChar(Node* node);
 
 	string getPostfix();
 private:

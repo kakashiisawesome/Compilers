@@ -1,6 +1,7 @@
 #include "Interpreter.h"
 
 #define UNDEFINED_SYMBOL "Undefined symbol "
+#define TYPE_MISMATCH "Error: type mismatch."
 
 string us;
 
@@ -24,17 +25,41 @@ bool isUnary(Node* node) {
 	}
 }
 
+bool Interpreter::isStringOrChar(Node* node) {
+	if ((runtime_mem[symbolTable[node->token.value].name].kind == STRING) || ((node->token.type == STRING_LIT) || (node->token.type == CHAR))) {
+		return true;
+	}
+	else {
+		bool l, r;
+		if (node->left_node) {
+			l = isStringOrChar(node->left_node);
+		}
+		if (node->right_node) {
+			r = isStringOrChar(node->right_node);
+		}
+		return l&&r;
+	}
+	
+}
+
 
 string Interpreter::visitLet(Node* node) {
 
 	Token id_token = node->left_node->token;
 	string rval = visit(node->right_node);
+	Object runtime_obj;
 
-	if (rval == UNDEFINED_SYMBOL) {
-		return UNDEFINED_SYMBOL;
+	if ((rval == UNDEFINED_SYMBOL) || (rval == TYPE_MISMATCH)) {
+		return rval;
+	}
+
+	if (isStringOrChar(node->right_node)) {
+		runtime_obj = Object(STRING_LIT, rval);
+	}
+	else {
+		runtime_obj = Object(rval);
 	}
 	
-	Object runtime_obj(rval);
 
 	Symbol v;
 	v.name = id_token.value;
@@ -43,12 +68,16 @@ string Interpreter::visitLet(Node* node) {
 		v = symbolTable[v.name];
 	}
 
-	if (runtime_obj.kind == Kind::INT) {
+	switch (runtime_obj.kind) {
+	case INT:
 		v.type = INTEGER;
-	}
-	else {
+	case DOUBLE:
 		v.type = FLOAT;
+	case STRING:
+		v.type = STRING_LIT;
 	}
+	
+
 	symbolTable[v.name] = v;
 
 	runtime_mem[v.name] = runtime_obj;
@@ -59,6 +88,7 @@ string Interpreter::visitLet(Node* node) {
 
 string Interpreter::visitAssign(Node* node) {
 
+	Object runtime_obj;
 	Token id_token = node->left_node->token;
 
 	if (symbolTable.find(id_token.value) == symbolTable.end()) {
@@ -67,23 +97,25 @@ string Interpreter::visitAssign(Node* node) {
 	}
 
 	string rval = visit(node->right_node);
-	if (rval == UNDEFINED_SYMBOL) {
-		return UNDEFINED_SYMBOL;
+	if ((rval == UNDEFINED_SYMBOL) || (rval == TYPE_MISMATCH)) {
+		return rval;
 	}
 
-	Object runtime_obj(rval);
-
-	Symbol v = symbolTable[id_token.value];
-
-	//Only need to update type and runtime value of pre-existing symbol
-	if (runtime_obj.kind == Kind::INT) {
-		v.type = INTEGER;
+	if (isStringOrChar(node->right_node)) {
+		runtime_obj = Object(STRING_LIT, rval);
 	}
 	else {
-		v.type = FLOAT;
+		runtime_obj = Object(rval);
 	}
-	symbolTable[v.name] = v;
 
+	Symbol v = symbolTable[id_token.value];
+	Object lobj = runtime_mem[v.name];
+
+	if (lobj.kind != runtime_obj.kind) {
+		return "" + runtime_obj.getType() + " to a value of type " + lobj.getType() + "\n";
+	}
+
+	//Only need to update runtime value of pre-existing symbol
 	runtime_mem[v.name] = runtime_obj;
 
 	return runtime_obj.getString();
@@ -101,6 +133,8 @@ string Interpreter::visit(Node* node) {
 			return lobj.getString();
 		}
 
+		Object lobj, robj;
+
 		string ls = visit(node->left_node);
 		string rs = visit(node->right_node);
 
@@ -112,8 +146,22 @@ string Interpreter::visit(Node* node) {
 			return UNDEFINED_SYMBOL;
 		}
 
-		Object lobj(ls);
-		Object robj(rs);
+		if (isStringOrChar(node->left_node)) {
+			lobj = Object(STRING_LIT, ls);
+			if (!isStringOrChar(node->right_node)) {
+				return TYPE_MISMATCH;
+			}
+			robj = Object(STRING_LIT, rs);
+
+		}
+		else {
+			Object lobj(ls);
+			if (isStringOrChar(node->right_node)) {
+				return TYPE_MISMATCH;
+			}
+			Object robj(rs);
+		}
+
 
 		Object res = lobj + robj;
 		
@@ -201,6 +249,9 @@ string Interpreter::visit(Node* node) {
 		}
 
 		return runtime_mem[symbolTable[node->token.value].name].getString();
+	}
+	else if ((node->token.type == STRING_LIT) || (node->token.type == CHAR)) {
+	return node->token.value;
 	}
 }
 

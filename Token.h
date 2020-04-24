@@ -11,12 +11,15 @@
 #define LPAREN "("
 #define RPAREN ")"
 #define ASSIGN "="
-#define ID "ID"
+
 
 // Keywords
 #define LET "LET"
 #define INTEGER "INTEGER"
 #define FLOAT "FLOAT"
+#define ID "ID"
+#define STRING_LIT "STRING_LIT"
+#define CHAR "CHAR"
 
 using namespace std;
 class Token {

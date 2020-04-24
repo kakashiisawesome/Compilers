@@ -55,6 +55,10 @@ Node* Parser::term() {
 	Node* left_node = factor();
 	Node* op_node;
 
+	if ((left_node->token.type == CHAR) || (left_node->token.type == STRING_LIT)) {
+		return left_node;
+	}
+
 	while ((curr_token.type == MUL) || (curr_token.type == DIV)) {
 		
 		Token t = curr_token;
@@ -79,6 +83,21 @@ Node* Parser::term() {
 }
 
 Node* Parser::expr() {
+	//For string and char
+	if ((curr_token.type == STRING_LIT) || (curr_token.type == CHAR)) {
+		Node* left_node = stringOrChar();
+		Node* op_node;
+		while (curr_token.type == PLUS) {
+			op_node = Node().newNode(curr_token);
+			Node* right_node = stringOrChar();
+			op_node->left_node = left_node;
+			op_node->right_node = right_node;
+			left_node = op_node;
+		}
+
+		return left_node;
+	}
+
 	Node* left_node = term();
 	Node* op_node;
 
@@ -103,6 +122,22 @@ Node* Parser::expr() {
 	}
 
 	return left_node;
+}
+
+Node* Parser::stringOrChar() {
+	if (curr_token.type == STRING_LIT) {
+		Node* node = Node().newNode(curr_token);
+
+		match(STRING_LIT);
+		return node;
+	}
+
+	if (curr_token.type == CHAR) {
+		Node* node = Node().newNode(curr_token);
+
+		match(CHAR);
+		return node;
+	}
 }
 
 Node* Parser::letStatement() {

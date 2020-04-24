@@ -163,6 +163,24 @@ Token Lexer::getNextToken() {
 		pos++;
 		return Token(ASSIGN, "=");
 	}
+	else if (input[pos] == '\'') {
+		if (input[pos + 1] == '\'') { error(); }
+		string ch = "";
+		ch += input[pos + 1];
+		pos += 3;
+		return Token(CHAR, ch);
+	}
+	else if (input[pos] == '"') {
+		pos++;
+		string s;
+		if (input[pos] == '"') { error(); }
+		while (input[pos] != '"') {
+			s += input[pos];
+			pos++;
+		}
+		pos++;
+		return Token(STRING_LIT, s);
+	}
 	else {
 		error();
 	}
