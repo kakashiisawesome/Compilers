@@ -201,9 +201,13 @@ Node* Parser::statement() {
 
 AST Parser::parse() {
 
-	Node* root;
-	root = statement();
-	AST tree(root);
+	vector<Node*> statements;
+
+	for (int i = 0; i < lexer.code.size(); i++) {
+		statements.push_back(statement());
+	}
+
+	AST tree(statements);
 
 	return tree;
 }

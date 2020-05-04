@@ -9,10 +9,10 @@ class AST {
 public:
 	
 
-	Node* root;
+	vector<Node*> statements;
 
-	AST(Node* r) {
-		root = r;
+	AST(vector<Node*> s) {
+		statements = s;
 	}
 	AST(){}
 };

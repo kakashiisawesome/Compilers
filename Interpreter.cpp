@@ -5,15 +5,16 @@
 
 string us;
 
-string Interpreter::interpret() {
+vector<string> Interpreter::interpret() {
 	tree = parser.parse();
-	string res = visit(tree.root);
-	if (res == UNDEFINED_SYMBOL) {
-		return UNDEFINED_SYMBOL + us;
+	vector<string> output;
+
+	for (auto statement : tree.statements) {
+		string res = visit(statement);
+		output.push_back(res);
 	}
-	else {
-		return res;
-	}
+	
+	return output;
 }
 
 bool isUnary(Node* node) {
@@ -30,7 +31,7 @@ bool Interpreter::isStringOrChar(Node* node) {
 		return true;
 	}
 	else {
-		bool l, r;
+		bool l = false, r = false;
 		if (node->left_node) {
 			l = isStringOrChar(node->left_node);
 		}
@@ -71,10 +72,13 @@ string Interpreter::visitLet(Node* node) {
 	switch (runtime_obj.kind) {
 	case INT:
 		v.type = INTEGER;
+		break;
 	case DOUBLE:
 		v.type = FLOAT;
+		break;
 	case STRING:
 		v.type = STRING_LIT;
+		break;
 	}
 	
 
@@ -155,11 +159,11 @@ string Interpreter::visit(Node* node) {
 
 		}
 		else {
-			Object lobj(ls);
+			lobj = Object(ls);
 			if (isStringOrChar(node->right_node)) {
 				return TYPE_MISMATCH;
 			}
-			Object robj(rs);
+			robj = Object(rs);
 		}
 
 
@@ -268,13 +272,13 @@ string postorder(Node* node) {
 	return l + r + node->token.value;
 }
 
-string Interpreter::getPostfix() {
-	if (!tree.root) {
-		cout << "No AST generated.\n";
-		exit(EXIT_FAILURE);
-	}
-
-	return postorder(tree.root);
-
-}
+//string Interpreter::getPostfix() {
+//	if (!tree.root) {
+//		cout << "No AST generated.\n";
+//		exit(EXIT_FAILURE);
+//	}
+//
+//	return postorder(tree.root);
+//
+//}
 

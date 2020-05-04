@@ -4,23 +4,39 @@ using namespace std;
 
 int main() {
 
+	string inp;
+	vector<string> code, res;
 	cout << "Starting...\n";
 	cout << "Enter input expr or q to quit: \n";
-	string inp;
-	cout << "> ";
+	cout << ">  ";
 	getline(cin, inp);
-	Lexer lex(inp);
-	Parser p(lex);
-	Interpreter i(p);
 	while (inp != "q") {
 		
-		string res = i.interpret();
-		cout << res << "\n";
-		//cout << "Postfix : " << i.getPostfix() << "\n";
-		cout << "> ";
-		getline(cin, inp);
-		Lexer lex(inp);
+		while ((!inp.empty())) {
+			code.push_back(inp);
+
+			cout << ".. ";
+			getline(cin, inp);
+
+		}
+
+		Lexer lex(code);
 		Parser p(lex);
-		i.parser = p;
+		Interpreter i(p);
+		res = i.interpret();
+
+		for (auto i : res) {
+			cout << i << "\n";
+		}
+		code.clear();
+		res.clear();
+		cout << ">  ";
+		getline(cin, inp);
 	}
+
+	
+	
+	
+	
+
 }

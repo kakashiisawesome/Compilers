@@ -15,7 +15,7 @@ public:
 	map<string, Symbol> symbolTable;
 	map<string, Object> runtime_mem;
 
-	string interpret();
+	vector<string> interpret();
 
 	string visit(Node* node);
 	string visitLet(Node* node);

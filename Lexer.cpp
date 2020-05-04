@@ -8,39 +8,39 @@ void error() {
 
 Token Lexer::peek() {
 	int peek_pos = pos + 1;
-	if (peek_pos >= input.size()) {
+	if (peek_pos >= line.size()) {
 		return Token(EOF, EOF);
 	}
-	while (isspace(input[peek_pos])) {
+	while (isspace(line[peek_pos])) {
 		peek_pos++;
 	}
 
-	if (isdigit(input[peek_pos])) {
+	if (isdigit(line[peek_pos])) {
 		string temp;
-		while (isdigit(input[peek_pos])) {
-			temp += input[peek_pos];
+		while (isdigit(line[peek_pos])) {
+			temp += line[peek_pos];
 			peek_pos++;
 		}
 
-		if (input[peek_pos] == '.') {
-			temp += input[peek_pos];
+		if (line[peek_pos] == '.') {
+			temp += line[peek_pos];
 			peek_pos++;
 		}
 
-		while (isdigit(input[peek_pos])) {
-			temp += input[peek_pos];
+		while (isdigit(line[peek_pos])) {
+			temp += line[peek_pos];
 			peek_pos++;
 		}
 
 		return Token(NUM, temp);
 	}
 
-	if (isalnum(input[peek_pos])) {
+	if (isalnum(line[peek_pos])) {
 
-		if (isalpha(input[peek_pos])) {
+		if (isalpha(line[peek_pos])) {
 			string temp;
-			while (isalnum(input[peek_pos])) {
-				temp += input[peek_pos];
+			while (isalnum(line[peek_pos])) {
+				temp += line[peek_pos];
 				peek_pos++;
 			}
 
@@ -56,25 +56,25 @@ Token Lexer::peek() {
 	}
 
 
-	else if (input[peek_pos] == '+') {
+	else if (line[peek_pos] == '+') {
 		return Token(PLUS, "+");
 	}
-	else if (input[peek_pos] == '-') {
+	else if (line[peek_pos] == '-') {
 		return Token(MINUS, "-");
 	}
-	else if (input[peek_pos] == '*') {
+	else if (line[peek_pos] == '*') {
 		return Token(MUL, "*");
 	}
-	else if (input[peek_pos] == '/') {
+	else if (line[peek_pos] == '/') {
 		return Token(DIV, "/");
 	}
-	else if (input[peek_pos] == '(') {
+	else if (line[peek_pos] == '(') {
 		return Token(LPAREN, "(");
 	}
-	else if (input[peek_pos] == ')') {
+	else if (line[peek_pos] == ')') {
 		return Token(RPAREN, ")");
 	}
-	else if (input[peek_pos] == '=') {
+	else if (line[peek_pos] == '=') {
 		return Token(ASSIGN, "=");
 	}
 	else {
@@ -83,42 +83,54 @@ Token Lexer::peek() {
 
 }
 
+bool Lexer::updateLine() {
+	if (line_no >= code.size()) {
+		return false;
+	}
+	line = code[line_no];
+	return true;
+}
+
 Token Lexer::getNextToken() {
 
-	if (pos >= input.size()) {
-		return Token(EOF, EOF);
+	if (pos >= line.size()) {
+		pos = 0;
+		line_no++;
+		if (!updateLine()) {
+			return Token(EOF, EOF);
+		}
 	}
 
-	while (isspace(input[pos])) {
+	while (isspace(line[pos])) {
 		pos++;
 	}
 
-	if (isdigit(input[pos])) {
+	if (isdigit(line[pos])) {
 		string temp;
-		while (isdigit(input[pos])) {
-			temp += input[pos];
+		while (isdigit(line[pos])) {
+			temp += line[pos];
 			pos++;
 		}
 
-		if (input[pos] == '.') {
-			temp += input[pos];
+		if (line[pos] == '.') {
+			temp += line[pos];
 			pos++;
 		}
 
-		while (isdigit(input[pos])) {
-			temp += input[pos];
+		while (isdigit(line[pos])) {
+			temp += line[pos];
 			pos++;
 		}
 
 		return Token(NUM, temp);
 	}
 
-	if (isalnum(input[pos])) {
+	if (isalnum(line[pos])) {
 
-		if (isalpha(input[pos])) {
+		if (isalpha(line[pos])) {
 			string temp;
-			while (isalnum(input[pos])) {
-				temp += input[pos];
+			while (isalnum(line[pos])) {
+				temp += line[pos];
 				pos++;
 			}
 
@@ -135,47 +147,47 @@ Token Lexer::getNextToken() {
 	}
 
 	
-	else if (input[pos] == '+') {
+	else if (line[pos] == '+') {
 		pos++;
 		return Token(PLUS, "+");
 	}
-	else if (input[pos] == '-') {
+	else if (line[pos] == '-') {
 		pos++;
 		return Token(MINUS, "-");
 	}
-	else if (input[pos] == '*') {
+	else if (line[pos] == '*') {
 		pos++;
 		return Token(MUL, "*");
 	}
-	else if (input[pos] == '/') {
+	else if (line[pos] == '/') {
 		pos++;
 		return Token(DIV, "/");
 	}
-	else if (input[pos] == '(') {
+	else if (line[pos] == '(') {
 		pos++;
 		return Token(LPAREN, "(");
 	}
-	else if (input[pos] == ')') {
+	else if (line[pos] == ')') {
 		pos++;
 		return Token(RPAREN, ")");
 	}
-	else if (input[pos] == '=') {
+	else if (line[pos] == '=') {
 		pos++;
 		return Token(ASSIGN, "=");
 	}
-	else if (input[pos] == '\'') {
-		if (input[pos + 1] == '\'') { error(); }
+	else if (line[pos] == '\'') {
+		if (line[pos + 1] == '\'') { error(); }
 		string ch = "";
-		ch += input[pos + 1];
+		ch += line[pos + 1];
 		pos += 3;
 		return Token(CHAR, ch);
 	}
-	else if (input[pos] == '"') {
+	else if (line[pos] == '"') {
 		pos++;
 		string s;
-		if (input[pos] == '"') { error(); }
-		while (input[pos] != '"') {
-			s += input[pos];
+		if (line[pos] == '"') { error(); }
+		while (line[pos] != '"') {
+			s += line[pos];
 			pos++;
 		}
 		pos++;
