@@ -5,7 +5,10 @@ using namespace std;
 int main() {
 
 	string inp;
-	vector<string> code, res;
+	vector<string> code;
+	Interpreter i;
+	Lexer lex;
+	Parser p;
 	cout << "Starting...\n";
 	cout << "Enter input expr or q to quit: \n";
 	cout << ">  ";
@@ -20,16 +23,13 @@ int main() {
 
 		}
 
-		Lexer lex(code);
-		Parser p(lex);
-		Interpreter i(p);
-		res = i.interpret();
+		lex = Lexer(code);
+		p = Parser(lex);
+		i.parser = p;
+		string res = i.interpret();
 
-		for (auto i : res) {
-			cout << i << "\n";
-		}
+		cout << res << "\n";
 		code.clear();
-		res.clear();
 		cout << ">  ";
 		getline(cin, inp);
 	}

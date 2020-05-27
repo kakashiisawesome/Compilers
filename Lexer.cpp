@@ -7,40 +7,47 @@ void error() {
 }
 
 Token Lexer::peek() {
-	int peek_pos = pos + 1;
-	if (peek_pos >= line.size()) {
-		return Token(EOF, EOF);
+	int peek_pos = pos;
+	int l = line_no;
+	string pline = line;
+	if (peek_pos >= pline.size()) {
+		peek_pos = 0;
+		l++;
+		if (l >= code.size()) {
+			return Token(EOF, EOF);
+		}
+		pline = code[l];
 	}
-	while (isspace(line[peek_pos])) {
+	while (isspace(pline[peek_pos])) {
 		peek_pos++;
 	}
 
-	if (isdigit(line[peek_pos])) {
+	if (isdigit(pline[peek_pos])) {
 		string temp;
-		while (isdigit(line[peek_pos])) {
-			temp += line[peek_pos];
+		while (isdigit(pline[peek_pos])) {
+			temp += pline[peek_pos];
 			peek_pos++;
 		}
 
-		if (line[peek_pos] == '.') {
-			temp += line[peek_pos];
+		if (pline[peek_pos] == '.') {
+			temp += pline[peek_pos];
 			peek_pos++;
 		}
 
-		while (isdigit(line[peek_pos])) {
-			temp += line[peek_pos];
+		while (isdigit(pline[peek_pos])) {
+			temp += pline[peek_pos];
 			peek_pos++;
 		}
 
 		return Token(NUM, temp);
 	}
 
-	if (isalnum(line[peek_pos])) {
+	if (isalnum(pline[peek_pos])) {
 
-		if (isalpha(line[peek_pos])) {
+		if (isalpha(pline[peek_pos])) {
 			string temp;
-			while (isalnum(line[peek_pos])) {
-				temp += line[peek_pos];
+			while (isalnum(pline[peek_pos])) {
+				temp += pline[peek_pos];
 				peek_pos++;
 			}
 
@@ -56,26 +63,50 @@ Token Lexer::peek() {
 	}
 
 
-	else if (line[peek_pos] == '+') {
+	else if (pline[peek_pos] == '+') {
 		return Token(PLUS, "+");
 	}
-	else if (line[peek_pos] == '-') {
+	else if (pline[peek_pos] == '-') {
 		return Token(MINUS, "-");
 	}
-	else if (line[peek_pos] == '*') {
+	else if (pline[peek_pos] == '*') {
 		return Token(MUL, "*");
 	}
-	else if (line[peek_pos] == '/') {
+	else if (pline[peek_pos] == '/') {
 		return Token(DIV, "/");
 	}
-	else if (line[peek_pos] == '(') {
+	else if (pline[peek_pos] == '(') {
 		return Token(LPAREN, "(");
 	}
-	else if (line[peek_pos] == ')') {
+	else if (pline[peek_pos] == ')') {
 		return Token(RPAREN, ")");
 	}
-	else if (line[peek_pos] == '=') {
+	else if (pline[peek_pos] == '{') {
+		return Token(LBRACKET, "{");
+	}
+	else if (pline[peek_pos] == '}') {
+		return Token(RBRACKET, "}");
+	}
+	else if (pline[peek_pos] == '=') {
 		return Token(ASSIGN, "=");
+	}
+	else if (pline[peek_pos] == '\'') {
+		if (pline[peek_pos + 1] == '\'') { error(); }
+		string ch = "";
+		ch += pline[peek_pos + 1];
+		peek_pos += 3;
+		return Token(CHAR, ch);
+	}
+	else if (pline[peek_pos] == '"') {
+		peek_pos++;
+		string s;
+		if (pline[peek_pos] == '"') { error(); }
+		while (pline[peek_pos] != '"') {
+			s += pline[peek_pos];
+			peek_pos++;
+		}
+		peek_pos++;
+		return Token(STRING_LIT, s);
 	}
 	else {
 		error();
@@ -139,14 +170,24 @@ Token Lexer::getNextToken() {
 				return Token(LET, temp);
 			}
 
+			if (temp == "def") {
+				return Token(DEF, temp);
+			}
+
+			if (temp == "return") {
+				return Token(RET, temp);
+			}
+
 			return Token(ID, temp);
 		}
 
 		
 
 	}
-
-	
+	else if (line[pos] == ',') {
+		pos++;
+		return Token(COMMA, ",");
+	}
 	else if (line[pos] == '+') {
 		pos++;
 		return Token(PLUS, "+");
@@ -170,6 +211,14 @@ Token Lexer::getNextToken() {
 	else if (line[pos] == ')') {
 		pos++;
 		return Token(RPAREN, ")");
+	}
+	else if (line[pos] == '{') {
+		pos++;
+		return Token(LBRACKET, "{");
+	}
+	else if (line[pos] == '}') {
+		pos++;
+		return Token(RBRACKET, "}");
 	}
 	else if (line[pos] == '=') {
 		pos++;

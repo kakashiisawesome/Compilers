@@ -2,11 +2,8 @@
 
 struct Node {
 	Token token;
-	Node* left_node;
-	Node* right_node;
+	vector<Node*> subnodes;
 	
-	void print();
-
 	Node* newNode(Token t);
 };
 

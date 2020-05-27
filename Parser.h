@@ -45,8 +45,11 @@ public:
 	Node* expr();
 	Node* stringOrChar();
 
+	Node* returnStatement();
 	Node* letStatement();
 	Node* assignStatement();
+	Node* functionDef();
+	Node* functionCall();
 
 	Node* statement();
 

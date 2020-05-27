@@ -2,10 +2,6 @@
 #include "Token.h"
 using namespace std;
 
-
-
-
-
 class Lexer {
 public:
 	vector<string> code;

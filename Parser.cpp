@@ -18,14 +18,14 @@ Node* Parser::factor() {
 	if (curr_token.type == PLUS) {
 		Node* node = Node().newNode(curr_token);
 		match(PLUS);
-		node->left_node = factor();
+		node->subnodes.push_back(factor());
 		return node;
 	}
 	
 	if (curr_token.type == MINUS) {
 		Node* node = Node().newNode(curr_token);
 		match(MINUS);
-		node->left_node = factor();
+		node->subnodes.push_back(factor());
 		return node;
 	}
 
@@ -37,6 +37,9 @@ Node* Parser::factor() {
 	}
 
 	if (curr_token.type == ID) {
+		if (lexer.peek().type == LPAREN) {
+			return functionCall();
+		}
 		Node* node = Node().newNode(curr_token);
 
 		match(ID);
@@ -73,8 +76,8 @@ Node* Parser::term() {
 
 		Node* right_node = factor();
 
-		op_node->left_node = left_node;
-		op_node->right_node = right_node;
+		op_node->subnodes.push_back(left_node);
+		op_node->subnodes.push_back(right_node);
 
 		left_node = op_node;
 	}
@@ -90,8 +93,8 @@ Node* Parser::expr() {
 		while (curr_token.type == PLUS) {
 			op_node = Node().newNode(curr_token);
 			Node* right_node = stringOrChar();
-			op_node->left_node = left_node;
-			op_node->right_node = right_node;
+			op_node->subnodes.push_back(left_node);
+			op_node->subnodes.push_back(right_node);
 			left_node = op_node;
 		}
 
@@ -115,8 +118,8 @@ Node* Parser::expr() {
 
 		Node* right_node = term();
 
-		op_node->left_node = left_node;
-		op_node->right_node = right_node;
+		op_node->subnodes.push_back(left_node);
+		op_node->subnodes.push_back(right_node);
 
 		left_node = op_node;
 	}
@@ -158,8 +161,8 @@ Node* Parser::letStatement() {
 	
 	right_node = expr();
 
-	let_node->left_node = left_node;
-	let_node->right_node = right_node;
+	let_node->subnodes.push_back(left_node);
+	let_node->subnodes.push_back(right_node);
 
 	return let_node;
 
@@ -181,15 +184,132 @@ Node* Parser::assignStatement() {
 
 	right_node = expr();
 
-	op_node->left_node = left_node;
-	op_node->right_node = right_node;
+	op_node->subnodes.push_back(left_node);
+	op_node->subnodes.push_back(right_node);
 
 	return op_node;
+}
+
+Node* Parser::functionDef() {
+	//def
+	match(DEF);
+
+	//Function name
+	string fname;
+	fname = curr_token.value;
+	match(ID);
+	Token t(FUNCTION_DEF, fname);
+	Node* fnode = Node().newNode(t);
+
+	//Arguments
+	match(LPAREN);
+	Node* idNode;
+
+	if (curr_token.type == ID) {
+		idNode = Node().newNode(curr_token);
+		match(ID);
+		fnode->subnodes.push_back(idNode);
+
+		while (curr_token.type == COMMA) {
+			match(COMMA);
+			idNode = Node().newNode(curr_token);
+			match(ID);
+			fnode->subnodes.push_back(idNode);
+		}
+
+	}
+
+	//End of arguments node
+	Token end_arg(END_ARG, END_ARG);
+	idNode = Node().newNode(end_arg);
+	fnode->subnodes.push_back(idNode);
+
+	match(RPAREN);
+
+
+	//Body
+	match(LBRACKET);
+
+	while (curr_token.type != RBRACKET) {
+		if (curr_token.type == LET) {
+			fnode->subnodes.push_back(letStatement());
+		}
+		else if ((curr_token.type == ID) && (lexer.peek().type == ASSIGN)) {
+			fnode->subnodes.push_back(assignStatement());
+		}
+		else if (curr_token.type == RET) {
+			fnode->subnodes.push_back(returnStatement());
+			break;
+		}
+		else {
+			fnode->subnodes.push_back(expr());
+		}
+	}
+
+	match(RBRACKET);
+
+	return fnode;
+	
+}
+
+Node* Parser::returnStatement() {
+	Node* node = Node().newNode(curr_token);
+	match(RET);
+
+	node->subnodes.push_back(expr());
+
+	return node;
+}
+
+Node* Parser::functionCall() {
+	//Function name
+	string fname;
+	fname = curr_token.value;
+	match(ID);
+	Token t(FUNCTION_CALL, fname);
+	Node* fnode = Node().newNode(t);
+
+	//Parameters
+	match(LPAREN);
+	Node* argNode;
+
+	if ((curr_token.type == ID) || (curr_token.type == NUM)) {
+		argNode = Node().newNode(curr_token);
+
+		if (curr_token.type == ID) {
+			match(ID);
+		}
+		else {
+			match(NUM);
+		}
+		
+		fnode->subnodes.push_back(argNode);
+
+		while (curr_token.type == COMMA) {
+			match(COMMA);
+			argNode = Node().newNode(curr_token);
+			if (curr_token.type == ID) {
+				match(ID);
+			}
+			else {
+				match(NUM);
+			}
+			fnode->subnodes.push_back(argNode);
+		}
+
+	}
+
+	match(RPAREN);
+
+	return fnode;
 }
 
 Node* Parser::statement() {
 	if (curr_token.type == LET) {
 		return letStatement();
+	}
+	else if (curr_token.type == DEF) {
+		return functionDef();
 	}
 	else if ((curr_token.type == ID) && (lexer.peek().type == ASSIGN)) {
 		return assignStatement();
@@ -204,6 +324,7 @@ AST Parser::parse() {
 	vector<Node*> statements;
 
 	for (int i = 0; i < lexer.code.size(); i++) {
+		if (curr_token.type == EOF) { break; }
 		statements.push_back(statement());
 	}
 
